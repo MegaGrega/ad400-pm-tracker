@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AD400 PM Rotation Tracker</title>
+<style>
+:root{--bg:#edf0ee;--card:#fbfcfb;--tx:#18221f;--mu:#5d6b66;--bd:#d3dad6;--ac:#1d5c7a;--acs:#dcebf2;--ok:#2c8a5a;
+--eb:#dff1e6;--et:#14683d;--mb:#fbeccb;--mt:#6b4a00;--hb:#f8dcd8;--ht:#8f2218}
+@media(prefers-color-scheme:dark){:root{--bg:#121816;--card:#1a2220;--tx:#e6ece9;--mu:#93a29c;--bd:#2c3935;--ac:#7cc0de;--acs:#1f3944;--ok:#4cc58a;
+--eb:#1b3a2a;--et:#7fe0aa;--mb:#3e3216;--mt:#f0c96a;--hb:#40201d;--ht:#ff9d92}}
+:root[data-theme="dark"]{--bg:#121816;--card:#1a2220;--tx:#e6ece9;--mu:#93a29c;--bd:#2c3935;--ac:#7cc0de;--acs:#1f3944;--ok:#4cc58a;
+--eb:#1b3a2a;--et:#7fe0aa;--mb:#3e3216;--mt:#f0c96a;--hb:#40201d;--ht:#ff9d92}
+:root[data-theme="light"]{--bg:#edf0ee;--card:#fbfcfb;--tx:#18221f;--mu:#5d6b66;--bd:#d3dad6;--ac:#1d5c7a;--acs:#dcebf2;--ok:#2c8a5a;
+--eb:#dff1e6;--et:#14683d;--mb:#fbeccb;--mt:#6b4a00;--hb:#f8dcd8;--ht:#8f2218}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:clamp(16px,4vw,40px)}
+.wrap{max-width:1040px;margin:auto;display:flex;flex-direction:column;gap:28px}
+.disp{font-family:Bahnschrift,"DIN Alternate","Arial Narrow",system-ui,sans-serif;font-stretch:condensed}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ac);font-weight:600}
+h1{margin:0;font-size:clamp(30px,5vw,44px);line-height:1.05;font-weight:600;text-wrap:balance}
+.sub{color:var(--mu);max-width:62ch}
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.person{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.person[aria-pressed="true"]{border-color:var(--ac);background:var(--acs)}
+.person b{font-size:20px;font-weight:600}
+.person .wk{display:flex;gap:4px;flex-wrap:wrap}
+.person .wk span{font:12px ui-monospace,Consolas,monospace;background:var(--bg);border:1px solid var(--bd);border-radius:3px;padding:1px 6px}
+.prog{height:6px;background:var(--bd);border-radius:3px;overflow:hidden}.prog i{display:block;height:100%;background:var(--ok);transition:width .25s}
+.person small{color:var(--mu);font-variant-numeric:tabular-nums}
+.cycle{display:flex;flex-direction:column;gap:12px;margin-bottom:28px}
+.cycle>h2{margin:0;font-size:22px;font-weight:600;display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.cycle>h2 small{font:13px system-ui;color:var(--mu);letter-spacing:.02em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:12px}
+.week{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.week.cur{outline:2px solid var(--ac);outline-offset:1px}
+.week.done .name{text-decoration:line-through;text-decoration-color:var(--ok)}
+.hd{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.num{font:600 13px ui-monospace,Consolas,monospace;color:var(--mu)}
+.name{font-size:20px;font-weight:600}
+.tag{font-size:11px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:3px}
+.EASY{background:var(--eb);color:var(--et)}.MED{background:var(--mb);color:var(--mt)}.HARD{background:var(--hb);color:var(--ht)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap}
+button,select{font:inherit;font-size:13px;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:5px;padding:4px 10px;cursor:pointer}
+button.cb.on{background:var(--ac);border-color:var(--ac);color:var(--card)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+label.t{display:flex;gap:10px;align-items:flex-start;padding:4px 0;cursor:pointer;max-width:65ch}
+label.t input{margin-top:5px;accent-color:var(--ac)}
+label.t.d span{color:var(--mu);text-decoration:line-through}
+#status{background:var(--mb);color:var(--mt);border-radius:6px;padding:10px 14px}
+footer{color:var(--mu);font-size:13px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+</style></head><body>
+<div class="wrap">
+<header>
+ <div class="eyebrow">AD 400 · Project Management in Software Development</div>
+ <h1 class="disp">PM Rotation Tracker</h1>
+ <div class="sub">One project manager per week for 12 weeks, three cycles through the team. Check off each PM task as it gets done.</div>
+</header>
+<section class="team" id="team" aria-label="Team progress"></section>
+<div id="cycles"></div>
+<div id="status" role="status" hidden></div>
+<footer><span>Checkmarks are shared with everyone on the team.</span><button id="reset">Reset all</button></footer>
+</div>
+<script type="module">
+import {firebaseConfig} from "./firebase-config.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,doc,onSnapshot,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+/* ---- EDIT HERE: PM order for each cycle (weeks 1-4, 5-8, 9-12) ---- */
+const CYCLES=[
+ ["Matthew","Kainen","Wilson","Elton"],
+ ["Matthew","Kainen","Wilson","Elton"],
+ ["Matthew","Kainen","Wilson","Elton"]
+];
+/* ------------------------------------------------------------------ */
+const TEAM=[...new Set(CYCLES.flat())];
+const W=[
+["User Manual Epic","EASY",["Create the User Manual Epic in your team's Jira project (Assignment 1a)","Check in that team members have submitted assignments and are updating Jira tickets (Slack thread or team meeting)","Check in that team members are completing their User Manual reviews (Assignment 1b)"]],
+["PRD in Confluence","MED",["Run stand-up","Set up the team's PRD document in Confluence from the provided template (Assignment 2)","Work with team members to assign PRD sections to each person","Check in during the week that sections are getting updated","Run a PRD review meeting"]],
+["Templates and Kanban","MED",["Run stand-up","Recreate any required project templates in the team's Confluence, if provided (DS Assignment 3)","Decide with the team how to allocate work (sections, working live, etc.)","Create Jira tickets on the Kanban board to track this week's work","Check in during the week that work is being completed"]],
+["Epic and work split","MED",["Run stand-up","Create the Epic for this week's work (Assignment 4)","Decide with the team how to allocate work (sections, working live, etc.)"]],
+["Sprint setup","MED",["Run stand-up","Turn on Sprints and Story Points in Jira, then create the sprint (Assignment 5)","Finish backlog grooming before the planning meeting (can be async)","Run a sprint planning meeting"]],
+["Stand-up week","EASY",["Run the in-class stand-up","Schedule and run two more stand-ups during the week","Make sure all work is assigned or picked up by team members"]],
+["PR template","MED",["Set up the team's PR template in GitHub (Assignment 7)","Run two stand-up meetings this week"]],
+["Retro and review prep","HARD",["Run stand-up","Facilitate the team retro live in class (Retro in-class activity)","Facilitate the internal Sprint Review prep: burndown chart, ticket acceptance criteria, backlog adjustments (Assignment 8, Week 8)"]],
+["Sprint board over break","HARD",["Set up the sprint board","Run backlog grooming and sprint planning early; it falls over Thanksgiving break, so async is fine (Assignment 8, Week 9)"]],
+["Sprint Review","HARD",["Run the Sprint Review, the team's live presentation (Assignment 8, Week 10)","Run two stand-up meetings during the week","Make sure team members are working on their tickets"]],
+["Deployment Plan","MED",["Run two stand-up meetings during the week","Meet with the team to adjust tickets or goals for the sprint","Make sure tickets are ready to review before the sprint ends and PR reviews are underway","Set up the Deployment Plan document and assign sections (Assignment 9)"]],
+["Final presentation","MED",["Run one stand-up","Work with the team to plan and complete the final class presentation"]]
+];
+const KEY="ad400-pm-tracker-v2";
+let S={chk:{},pm:{},cur:1};
+let ref=null,readOnly=false,queue=Promise.resolve();
+try{S=Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
+const saveLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+function change(patch,replaceAll){
+ if(replaceAll)S=patch;else for(const k in patch){if(typeof patch[k]==="object")Object.assign(S[k],patch[k]);else S[k]=patch[k]}
+ saveLocal();render();
+ if(!ref)return;
+ queue=queue.then(async()=>{try{
+  if(replaceAll)await setDoc(ref,S);else await setDoc(ref,patch,{merge:true})
+ }catch(e){setStatus("Couldn't save to the shared tracker. Check your connection and try again.")}});
+}
+function setStatus(t){const el=document.getElementById("status");el.textContent=t;el.hidden=!t}
+let filter=null;
+const pmOf=w=>S.pm[w]||CYCLES[Math.floor((w-1)/4)][(w-1)%4];
+const total=w=>W[w-1][2].length;
+const done=w=>W[w-1][2].filter((_,i)=>S.chk[w+"-"+i]).length;
+function render(){
+ const t=document.getElementById("team");t.innerHTML="";
+ TEAM.forEach(n=>{let tt=0,d=0,wk=[];for(let w=1;w<=12;w++)if(pmOf(w)===n){wk.push(w);tt+=total(w);d+=done(w)}
+  const b=document.createElement("button");b.className="person";b.setAttribute("aria-pressed",filter===n);
+  b.innerHTML=`<b class="disp">${n}</b><div class="wk">${wk.map(w=>`<span>W${w}</span>`).join("")}</div><div class="prog"><i style="width:${tt?d/tt*100:0}%"></i></div><small>${d} of ${tt} tasks done</small>`;
+  b.onclick=()=>{filter=filter===n?null:n;render()};t.appendChild(b)});
+ const c=document.getElementById("cycles");c.innerHTML="";
+ for(let cy=0;cy<3;cy++){
+  const sec=document.createElement("section");sec.className="cycle";
+  sec.innerHTML=`<h2 class="disp">Cycle ${cy+1} <small>${CYCLES[cy].join(" → ")}</small></h2><div class="grid"></div>`;
+  const g=sec.querySelector(".grid");
+  for(let w=cy*4+1;w<=cy*4+4;w++){const pm=pmOf(w);if(filter&&pm!==filter)continue;
+   const [nm,lv,tasks]=W[w-1];const all=done(w)===total(w);
+   const d=document.createElement("article");d.className="week"+(w===S.cur?" cur":"")+(all?" done":"");
+   d.innerHTML=`<div class="hd"><span class="num">WEEK ${w}</span><span class="tag ${lv}">${lv}</span></div>
+   <div class="hd"><span class="name disp">${pm}: ${nm}</span></div>
+   <div class="ctl"><button class="cb${w===S.cur?" on":""}" data-cur="${w}">${w===S.cur?"Current week":"Set as current"}</button>
+   <select data-pm="${w}" aria-label="PM for week ${w}">${TEAM.map(n=>`<option${n===pm?" selected":""}>${n}</option>`).join("")}</select></div>`+
+   tasks.map((x,i)=>{const k=w+"-"+i,v=S.chk[k];return `<label class="t${v?" d":""}"><input type="checkbox" data-k="${k}"${v?" checked":""}><span>${x}</span></label>`}).join("");
+   g.appendChild(d)}
+  if(g.children.length)c.appendChild(sec)}
+ c.querySelectorAll("[data-k]").forEach(e=>{e.disabled=readOnly;e.onchange=()=>change({chk:{[e.dataset.k]:e.checked}})});
+ c.querySelectorAll("[data-pm]").forEach(e=>{e.disabled=readOnly;e.onchange=()=>change({pm:{[e.dataset.pm]:e.value}})});
+ c.querySelectorAll("[data-cur]").forEach(e=>{e.disabled=readOnly;e.onclick=()=>change({cur:+e.dataset.cur})});
+}
+document.getElementById("reset").onclick=()=>{if(confirm("Clear all checkmarks and PM swaps for everyone?"))change({chk:{},pm:{},cur:1},true)};
+render();
+if(firebaseConfig&&firebaseConfig.projectId&&!firebaseConfig.projectId.startsWith("PASTE")){
+ try{
+  ref=doc(getFirestore(initializeApp(firebaseConfig)),"tracker","main");
+  onSnapshot(ref,snap=>{if(snap.exists()){const d=snap.data();S={chk:d.chk||{},pm:d.pm||{},cur:d.cur||1};render()}},
+   ()=>setStatus("Lost the connection to the shared tracker. Reload the page."));
+ }catch(e){setStatus("Shared saving failed to start, so checkmarks save in this browser only.")}
+}else setStatus("Shared saving isn't set up yet, so checkmarks save in this browser only. See README.md.");
+</script>
+</body></html>
